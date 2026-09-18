@@ -64,3 +64,23 @@ const engine = createEngine({
 ```
 
 See `docs/contracts/dispatch.md` for dispatch ordering, result contracts, and atomicity rules.
+
+## Inventory
+
+Batch 3 adds immutable-style inventory operations, stack limits, durability and breakage,
+atomic transfers, and exact-stack reservations. Register `createInventoryHandlers()` with
+the Batch 2 engine to dispatch neutral `inventory.*` commands with injected stack IDs.
+
+```js
+import { addItem, createIdFactory } from './src/index.js';
+
+const nextState = addItem(state, {
+  containerId: 'bag', itemId: definition.itemId, quantity: 2,
+  quality: null, durability: null, metadata: {}, definition,
+  nextStackId: createIdFactory('stack', 0),
+});
+```
+
+See `docs/categories/inventory.md` for the state, stacking, reservation, handler, and
+durability contracts. Run `node examples/headless/inventory-transfer.mjs` for a complete
+headless engine example.
