@@ -1,7 +1,7 @@
 {
   "toolboxId": "a25-mechanics-toolbox",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "schemaVersion": "1.0.0",
   "runtimeTargets": ["browser", "android-webview"],
-  "exports": ["core"]
+  "exports": ["core", "resources", "inventory"]
 }
