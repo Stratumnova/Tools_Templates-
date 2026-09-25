@@ -1,3 +1,6 @@
+import { requireStableIdentifier } from './identifiers.js';
+import { copyImmutableData } from './immutable-data.js';
+
 function requireNonblankString(value, name) {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new TypeError(`${name} must be a nonblank string`);
@@ -19,7 +22,7 @@ function requirePlainObject(value, name) {
 export function createCommand(fields) {
   requirePlainObject(fields, 'fields');
   for (const name of ['commandId', 'type', 'actorId', 'roomId']) {
-    requireNonblankString(fields[name], name);
+    requireStableIdentifier(fields[name], name);
   }
   requireFiniteNumber(fields.issuedAt, 'issuedAt');
   requirePlainObject(fields.payload, 'payload');
@@ -41,7 +44,8 @@ export function createCommand(fields) {
 export function createEvent(fields) {
   requirePlainObject(fields, 'fields');
   for (const name of ['eventId', 'type', 'commandId', 'actorId', 'roomId', 'schemaVersion']) {
-    requireNonblankString(fields[name], name);
+    if (name === 'schemaVersion') requireNonblankString(fields[name], name);
+    else requireStableIdentifier(fields[name], name);
   }
   requireFiniteNumber(fields.occurredAt, 'occurredAt');
   requirePlainObject(fields.payload, 'payload');
@@ -76,4 +80,3 @@ export function reject(code, message, details) {
     rejection: { code, message, details: copyImmutableData(details, 'details') },
   };
 }
-import { copyImmutableData } from './immutable-data.js';

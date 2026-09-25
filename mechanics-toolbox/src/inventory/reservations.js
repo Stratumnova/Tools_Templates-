@@ -3,9 +3,10 @@ import { accept, reject } from '../core/contracts.js';
 import {
   addItem, damageDurability, inventoryInternals, removeItem, transferItem,
 } from './inventory.js';
+import { isStableIdentifier } from '../core/identifiers.js';
 
 function requireId(value, name) {
-  if (typeof value !== 'string' || value.trim() === '') throw inventoryError('inventory.invalid_input', `${name} must be nonblank`);
+  if (!isStableIdentifier(value)) throw inventoryError('inventory.invalid_input', `${name} must be a stable identifier`);
 }
 
 function requireArgs(input, functionKeys = []) {
@@ -35,10 +36,10 @@ export function reserveQuantity(state, input) {
   const next = stateCopy(state); const args = requireArgs(input);
   requireId(args.reservationId, 'reservationId'); requireId(args.containerId, 'containerId'); requireId(args.itemId, 'itemId');
   if (!Number.isInteger(args.quantity) || args.quantity <= 0) throw inventoryError('inventory.invalid_input', 'quantity must be positive');
-  if (next.reservationsById[args.reservationId]) {
+  if (Object.hasOwn(next.reservationsById, args.reservationId)) {
     throw inventoryError('inventory.duplicate_reservation', 'reservation ID already exists', { reservationId: args.reservationId });
   }
-  const container = next.containersById[args.containerId];
+  const container = Object.hasOwn(next.containersById, args.containerId) ? next.containersById[args.containerId] : undefined;
   if (!container) throw inventoryError('inventory.container_not_found', 'container does not exist');
   const alreadyReserved = inventoryInternals.reservedByStack(next, args.containerId);
   let remaining = args.quantity; const allocations = [];
@@ -63,7 +64,7 @@ export function reserveQuantity(state, input) {
 
 function applyReservation(state, record) {
   const next = stateCopy(state);
-  if (next.reservationsById[record.reservationId]) {
+  if (Object.hasOwn(next.reservationsById, record.reservationId)) {
     throw inventoryError('inventory.duplicate_reservation', 'reservation ID already exists', { reservationId: record.reservationId });
   }
   next.reservationsById[record.reservationId] = validatedClone(record, 'reservation');
@@ -72,14 +73,14 @@ function applyReservation(state, record) {
 
 export function releaseReservation(state, reservationId) {
   const next = stateCopy(state); requireId(reservationId, 'reservationId');
-  if (!next.reservationsById[reservationId]) throw inventoryError('inventory.reservation_not_found', 'reservation does not exist');
+  if (!Object.hasOwn(next.reservationsById, reservationId)) throw inventoryError('inventory.reservation_not_found', 'reservation does not exist');
   delete next.reservationsById[reservationId];
   return next;
 }
 
 export function consumeReservation(state, reservationId) {
   const next = stateCopy(state); requireId(reservationId, 'reservationId');
-  const reservation = next.reservationsById[reservationId];
+  const reservation = Object.hasOwn(next.reservationsById, reservationId) ? next.reservationsById[reservationId] : undefined;
   if (!reservation) throw inventoryError('inventory.reservation_not_found', 'reservation does not exist');
   const container = next.containersById[reservation.containerId];
   for (const allocation of reservation.allocations) {
@@ -114,7 +115,7 @@ export function createInventoryHandlers(options) {
     throw new TypeError('definitionsById and nextStackId are required');
   }
   const definitionsById = config.definitionsById;
-  const definitionFor = itemId => definitionsById[itemId];
+  const definitionFor = itemId => Object.hasOwn(definitionsById, itemId) ? definitionsById[itemId] : undefined;
   const decide = operation => (state, command, context) => {
     try {
       const result = operation(state, command.payload);
@@ -158,12 +159,13 @@ export function createInventoryHandlers(options) {
     },
     'inventory.damage_durability': {
       decide: decide((state, payload) => {
-        const container = state.containersById[payload.containerId];
+        const container = Object.hasOwn(state.containersById, payload.containerId)
+          ? state.containersById[payload.containerId] : undefined;
         const itemId = container?.stacks.find(stack => stack.stackId === payload.stackId)?.itemId;
         const generated = idCollector(options.nextStackId);
-        const result = damageDurability(state, {
-          ...payload, definition: definitionFor(itemId), definitionsById, nextStackId: () => generated.next(),
-        });
+        const damageInput = { ...payload, definitionsById, nextStackId: () => generated.next() };
+        if (itemId !== undefined) damageInput.definition = definitionFor(itemId);
+        const result = damageDurability(state, damageInput);
         return {
           type: result.event?.type ?? 'inventory.durability_damaged',
           payload: {

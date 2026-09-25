@@ -1,5 +1,11 @@
 # A25 Mechanics Toolbox
 
+Version 0.4.0 provides deterministic core, inventory, time, task, reservation, and offline
+simulation mechanics for browser and Android WebView runtimes.
+
+Run `npm test` for the complete suite or `node examples/headless/offline-work.mjs` for a
+headless offline-task example. See `docs/categories/time-and-tasks.md` for the contracts.
+
 A browser-native JavaScript mechanics toolbox for static websites and Android WebView hosts. Node.js is used only for development tests. The package has no runtime dependencies, server requirement, or bundling requirement.
 
 This is working code, not the A25 Mechanics Library research archive.

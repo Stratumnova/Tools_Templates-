@@ -1,4 +1,5 @@
 import { copyImmutableData } from '../core/immutable-data.js';
+import { isStableIdentifier } from '../core/identifiers.js';
 
 export class InventoryError extends Error {
   constructor(code, message, details = {}) {
@@ -18,7 +19,7 @@ function fail(message) {
 }
 
 function stableId(value, name) {
-  if (typeof value !== 'string' || value.trim() !== value || !/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/i.test(value)) {
+  if (!isStableIdentifier(value)) {
     fail(`${name} must be a stable identifier`);
   }
 }
@@ -52,7 +53,8 @@ function validateDefinition(def, options, visiting) {
     if (!['remove', 'scrap'].includes(value.durability.breakPolicy)) fail('breakPolicy must be remove or scrap');
     if (value.durability.breakPolicy === 'scrap') {
       stableId(value.durability.scrapItemId, 'scrapItemId');
-      const scrap = options.definitionsById?.[value.durability.scrapItemId];
+      const scrap = options.definitionsById && Object.hasOwn(options.definitionsById, value.durability.scrapItemId)
+        ? options.definitionsById[value.durability.scrapItemId] : undefined;
       if (!scrap || scrap.itemId !== value.durability.scrapItemId) fail('scrapItemId must reference a validated item');
       if (visiting.has(value.itemId)) fail('scrap references must not contain cycles');
       const nextVisiting = new Set(visiting);

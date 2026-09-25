@@ -1,0 +1,7 @@
+{
+  "routineId": "routine.basic-worker",
+  "taskType": "work.basic",
+  "priority": 0,
+  "durationMs": 1000,
+  "resources": ["worker"]
+}
