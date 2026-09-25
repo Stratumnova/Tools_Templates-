@@ -1,0 +1,23 @@
+[
+  {
+    "itemId": "material.scrap",
+    "schemaVersion": "1.0.0",
+    "label": "Scrap",
+    "tags": ["material"],
+    "stackLimit": 50,
+    "durability": { "enabled": false }
+  },
+  {
+    "itemId": "tool.utility",
+    "schemaVersion": "1.0.0",
+    "label": "Utility Tool",
+    "tags": ["tool"],
+    "stackLimit": 5,
+    "durability": {
+      "enabled": true,
+      "max": 100,
+      "breakPolicy": "scrap",
+      "scrapItemId": "material.scrap"
+    }
+  }
+]
