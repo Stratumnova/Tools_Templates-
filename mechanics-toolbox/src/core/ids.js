@@ -1,7 +1,7 @@
+import { requireStableIdentifier } from './identifiers.js';
+
 export function createIdFactory(prefix, start) {
-  if (typeof prefix !== 'string' || prefix.trim() === '') {
-    throw new TypeError('prefix must be a nonblank string');
-  }
+  requireStableIdentifier(prefix, 'prefix');
   if (!Number.isInteger(start) || start < 0) {
     throw new TypeError('start must be a non-negative integer');
   }

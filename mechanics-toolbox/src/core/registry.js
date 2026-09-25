@@ -1,7 +1,7 @@
+import { requireStableIdentifier } from './identifiers.js';
+
 function requireCommandType(commandType) {
-  if (typeof commandType !== 'string' || commandType.trim() === '') {
-    throw new TypeError('commandType must be a nonblank string');
-  }
+  requireStableIdentifier(commandType, 'commandType');
 }
 
 function requireHandler(handler) {

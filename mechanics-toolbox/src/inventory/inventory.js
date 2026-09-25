@@ -1,6 +1,7 @@
 import {
   inventoryError, validateItemDefinition, validatedClone,
 } from '../resources/definitions.js';
+import { isStableIdentifier } from '../core/identifiers.js';
 
 function requireObject(value, name, functionKeys = []) {
   if (!value || Array.isArray(value) || typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) {
@@ -23,8 +24,8 @@ function requireObject(value, name, functionKeys = []) {
 }
 
 function requireId(value, name) {
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw inventoryError('inventory.invalid_input', `${name} must be a nonblank string`);
+  if (!isStableIdentifier(value)) {
+    throw inventoryError('inventory.invalid_input', `${name} must be a stable identifier`);
   }
 }
 
@@ -43,15 +44,15 @@ function validateState(state) {
   }
   const stacksById = new Map();
   for (const [id, container] of Object.entries(copy.containersById)) {
-    if (!container || Array.isArray(container) || container.containerId !== id
+    if (!isStableIdentifier(id) || !container || Array.isArray(container) || container.containerId !== id
         || !Number.isInteger(container.capacity) || container.capacity < 0 || !Array.isArray(container.stacks)) {
       invalid('container is invalid', { containerId: id });
     }
     let total = 0;
     for (const stack of container.stacks) {
       if (!stack || Array.isArray(stack)
-          || typeof stack.stackId !== 'string' || stack.stackId.trim() === ''
-          || typeof stack.itemId !== 'string' || stack.itemId.trim() === ''
+          || !isStableIdentifier(stack.stackId)
+          || !isStableIdentifier(stack.itemId)
           || !Number.isInteger(stack.quantity) || stack.quantity <= 0) invalid('stack is invalid', { containerId: id });
       if (!Object.hasOwn(stack, 'quality') || !Object.hasOwn(stack, 'durability')
           || !stack.metadata || Array.isArray(stack.metadata) || typeof stack.metadata !== 'object') {
@@ -65,19 +66,19 @@ function validateState(state) {
   }
   const reservedById = new Map();
   for (const [id, reservation] of Object.entries(copy.reservationsById)) {
-    if (!reservation || Array.isArray(reservation) || reservation.reservationId !== id
-        || typeof reservation.containerId !== 'string' || reservation.containerId.trim() === ''
-        || typeof reservation.itemId !== 'string' || reservation.itemId.trim() === ''
+    if (!isStableIdentifier(id) || !reservation || Array.isArray(reservation) || reservation.reservationId !== id
+        || !isStableIdentifier(reservation.containerId)
+        || !isStableIdentifier(reservation.itemId)
         || !Number.isInteger(reservation.quantity) || reservation.quantity <= 0
         || !Array.isArray(reservation.allocations) || reservation.allocations.length === 0) {
       invalid('reservation is invalid', { reservationId: id });
     }
-    const container = copy.containersById[reservation.containerId];
+    const container = Object.hasOwn(copy.containersById, reservation.containerId) ? copy.containersById[reservation.containerId] : undefined;
     if (!container) invalid('reservation container does not exist', { reservationId: id });
     const allocationIds = new Set(); let allocated = 0;
     for (const allocation of reservation.allocations) {
       if (!allocation || Array.isArray(allocation)
-          || typeof allocation.stackId !== 'string' || allocation.stackId.trim() === ''
+          || !isStableIdentifier(allocation.stackId)
           || !Number.isInteger(allocation.quantity) || allocation.quantity <= 0
           || !Object.hasOwn(allocation, 'quality') || !Object.hasOwn(allocation, 'durability')
           || !allocation.metadata || Array.isArray(allocation.metadata) || typeof allocation.metadata !== 'object') {
@@ -106,7 +107,7 @@ function validateState(state) {
 
 function getContainer(state, containerId) {
   requireId(containerId, 'containerId');
-  const container = state.containersById[containerId];
+  const container = Object.hasOwn(state.containersById, containerId) ? state.containersById[containerId] : undefined;
   if (!container) throw inventoryError('inventory.container_not_found', 'container does not exist', { containerId });
   return container;
 }
@@ -266,7 +267,9 @@ export function damageDurability(state, input) {
   const quantity = stack.quantity;
   container.stacks = container.stacks.filter(candidate => candidate.stackId !== stack.stackId);
   if (definition.durability.breakPolicy === 'scrap') {
-    const scrap = validateItemDefinition(args.definitionsById[definition.durability.scrapItemId], {
+    const scrapDefinition = args.definitionsById && Object.hasOwn(args.definitionsById, definition.durability.scrapItemId)
+      ? args.definitionsById[definition.durability.scrapItemId] : undefined;
+    const scrap = validateItemDefinition(scrapDefinition, {
       definitionsById: args.definitionsById,
     });
     next = addTraits(next, container.containerId, {
