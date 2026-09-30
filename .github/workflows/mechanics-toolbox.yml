@@ -28,4 +28,12 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: mechanics-toolbox/package.json
-      - run: npm test
+      - name: Run complete test suite
+        run: npm test
+      - name: Run every headless example
+        run: |
+          node examples/headless/dispatch.mjs
+          node examples/headless/inventory-transfer.mjs
+          node examples/headless/offline-work.mjs
+          node examples/headless/npc-crafts-trap.mjs
+          node examples/headless/market-day.mjs
