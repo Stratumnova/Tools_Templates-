@@ -1,7 +1,7 @@
 # A25 Mechanics Toolbox
 
-Version 0.5.0 provides deterministic core, inventory, time, task, reservation, offline,
-and crafting mechanics for browser and Android WebView runtimes.
+Version 0.6.0 provides deterministic core, inventory, time, task, reservation, offline,
+crafting, and market mechanics for browser and Android WebView runtimes.
 
 Run `npm test` for the complete suite or `node examples/headless/npc-crafts-trap.mjs` for
 an engine-backed production example. See `docs/categories/crafting.md` for the crafting
@@ -109,3 +109,21 @@ const quality = calculateQuality({
 
 See `docs/categories/crafting.md` for recipe schemas, state shape, lifecycle rules, quality
 formula, and handler options.
+
+## Markets
+
+Batch 6 adds funded buy orders, seller-owned stalls, deterministic basis-point pricing,
+partial fulfillment, conserved accounting, and explicit Farmer/Beast Master routing.
+Market mutations validate and clone before change, so rejected work leaves no partial state.
+
+```js
+import { placeBuyOrder, routeStalls } from './src/index.js';
+
+market = placeBuyOrder(market, {
+  orderId: 'order-1', buyerId: 'buyer', itemId: 'carrot', category: 'produce',
+  quantity: 5, limitUnitPrice: 20, createdSequence: 1,
+});
+const routes = routeStalls(market, 'order-1');
+```
+
+See `docs/categories/markets.md` and run `node examples/headless/market-day.mjs`.

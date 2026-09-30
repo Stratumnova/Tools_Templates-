@@ -1,0 +1,39 @@
+name: Mechanics Toolbox Tests
+
+on:
+  push:
+    branches:
+      - 'build/mechanics-toolbox-batch-*'
+    paths:
+      - 'mechanics-toolbox/**'
+      - '.github/workflows/mechanics-toolbox.yml'
+  pull_request:
+    paths:
+      - 'mechanics-toolbox/**'
+      - '.github/workflows/mechanics-toolbox.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  node-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mechanics-toolbox
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mechanics-toolbox/package.json
+      - name: Run complete test suite
+        run: npm test
+      - name: Run every headless example
+        run: |
+          node examples/headless/dispatch.mjs
+          node examples/headless/inventory-transfer.mjs
+          node examples/headless/offline-work.mjs
+          node examples/headless/npc-crafts-trap.mjs
+          node examples/headless/market-day.mjs

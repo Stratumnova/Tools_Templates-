@@ -1,0 +1,12 @@
+{
+  "checkpoint": "batch-06",
+  "packageName": "A25_Mechanics_Toolbox_batch06.zip",
+  "sourceCommit": "db5d96a2cd7e28e26d4d2aeb60f80da9049d3202",
+  "sourceTree": "a120bfa778cf565c533bb23f585384184463f35a",
+  "archiveGitBlob": "377270c63e3788f37835611f230b9ec1048405c9",
+  "archiveBytes": 334899,
+  "archivedRoot": "mechanics-toolbox/",
+  "fileCount": 59,
+  "reviewStatus": "accepted-pending-final-ci",
+  "generatedAt": "2026-09-30T13:15:00-06:00"
+}
