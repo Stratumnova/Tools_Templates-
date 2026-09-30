@@ -38,6 +38,7 @@ export {
   createActor,
   createMarketHandlers,
   createMarketState,
+  expireBuyOrder,
   fulfillBuyOrder,
   marketTotals,
   openStall,
