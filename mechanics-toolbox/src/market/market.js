@@ -35,7 +35,16 @@ function denseStrings(value, name) {
       || typeof entry !== 'string' || entry.trim() === '')) fail('market.invalid_input', name + ' must be a dense string array');
   return [...new Set(value)];
 }
-function clone(value) { return copyImmutableData(value, 'market data'); }
+function clone(value) {
+  if (Array.isArray(value)) return value.map(entry => clone(entry));
+  if (value && typeof value === 'object') {
+    object(value, 'market data');
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, clone(entry)]));
+  }
+  if (value === null || typeof value === 'string' || typeof value === 'boolean'
+      || (typeof value === 'number' && Number.isFinite(value))) return value;
+  fail('market.invalid_input', 'market data must contain JSON-compatible values');
+}
 function record(value, name) {
   object(value, name);
   for (const key of Object.keys(value)) id(key, name + ' key');
