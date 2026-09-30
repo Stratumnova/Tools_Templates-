@@ -31,3 +31,18 @@ export {
   queueProduction,
   startProduction,
 } from './crafting/production.js';
+
+export {
+  MarketError,
+  cancelBuyOrder,
+  createActor,
+  createMarketHandlers,
+  createMarketState,
+  fulfillBuyOrder,
+  marketTotals,
+  openStall,
+  placeBuyOrder,
+  quoteUnitPrice,
+  routeStalls,
+  validateMarketState,
+} from './market/market.js';
