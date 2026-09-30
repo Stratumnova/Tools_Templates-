@@ -22,3 +22,12 @@ export {
 } from './tasks/tasks.js';
 export { releaseTaskResources, reserveTaskResources } from './tasks/reservations.js';
 export { advanceOffline, createTimeTaskHandlers } from './time/offline.js';
+export { CraftingError, calculateQuality, matchRecipeInputs, validateRecipe } from './crafting/recipes.js';
+export {
+  CRAFT_JOB_STATUSES,
+  cancelProduction,
+  completeProduction,
+  createCraftingHandlers,
+  queueProduction,
+  startProduction,
+} from './crafting/production.js';

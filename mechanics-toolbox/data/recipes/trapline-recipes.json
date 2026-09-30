@@ -1,0 +1,29 @@
+[
+  {
+    "recipeId": "craft.trap",
+    "schemaVersion": "1.0.0",
+    "inputs": [
+      { "itemId": "material.wood", "quantity": 2 }
+    ],
+    "substitutionGroups": [
+      {
+        "groupId": "binding",
+        "quantity": 2,
+        "options": ["material.rope", "material.vine"]
+      }
+    ],
+    "tools": [
+      { "itemId": "tool.utility", "minDurability": 10 }
+    ],
+    "stationTags": ["outdoors", "workbench"],
+    "durationMs": 1000,
+    "outputs": [
+      { "itemId": "item.trap", "quantity": 1 }
+    ],
+    "byproducts": [
+      { "itemId": "material.scrap", "quantity": 1 }
+    ],
+    "skillId": "skill.crafting",
+    "difficulty": 40
+  }
+]

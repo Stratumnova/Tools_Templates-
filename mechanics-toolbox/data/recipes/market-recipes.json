@@ -1,0 +1,27 @@
+[
+  {
+    "recipeId": "craft.storage-crate",
+    "schemaVersion": "1.0.0",
+    "inputs": [
+      { "itemId": "material.wood", "quantity": 4 }
+    ],
+    "substitutionGroups": [
+      {
+        "groupId": "fastener",
+        "quantity": 2,
+        "options": ["material.peg", "material.nail"]
+      }
+    ],
+    "tools": [
+      { "itemId": "tool.utility", "minDurability": 5 }
+    ],
+    "stationTags": ["workbench"],
+    "durationMs": 1500,
+    "outputs": [
+      { "itemId": "item.storage-crate", "quantity": 1 }
+    ],
+    "byproducts": [],
+    "skillId": "skill.crafting",
+    "difficulty": 30
+  }
+]
