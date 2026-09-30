@@ -1,10 +1,11 @@
 # A25 Mechanics Toolbox
 
-Version 0.4.0 provides deterministic core, inventory, time, task, reservation, and offline
-simulation mechanics for browser and Android WebView runtimes.
+Version 0.5.0 provides deterministic core, inventory, time, task, reservation, offline,
+and crafting mechanics for browser and Android WebView runtimes.
 
-Run `npm test` for the complete suite or `node examples/headless/offline-work.mjs` for a
-headless offline-task example. See `docs/categories/time-and-tasks.md` for the contracts.
+Run `npm test` for the complete suite or `node examples/headless/npc-crafts-trap.mjs` for
+an engine-backed production example. See `docs/categories/crafting.md` for the crafting
+contracts.
 
 A browser-native JavaScript mechanics toolbox for static websites and Android WebView hosts. Node.js is used only for development tests. The package has no runtime dependencies, server requirement, or bundling requirement.
 
@@ -90,3 +91,21 @@ const nextState = addItem(state, {
 See `docs/categories/inventory.md` for the state, stacking, reservation, handler, and
 durability contracts. Run `node examples/headless/inventory-transfer.mjs` for a complete
 headless engine example.
+
+## Crafting
+
+Batch 5 adds immutable recipe validation, deterministic exact and substitution matching,
+tool and station requirements, atomic input/station reservation, a four-state production
+lifecycle, and replay-safe `craft.*` handlers. Quality uses explicit skill, difficulty,
+condition, input-quality, and roll values; crafting never reads ambient randomness.
+
+```js
+import { calculateQuality, validateRecipe } from './src/index.js';
+
+const quality = calculateQuality({
+  skill: 60, difficulty: 40, toolCondition: 80, inputQuality: 65, roll: 0.5,
+});
+```
+
+See `docs/categories/crafting.md` for recipe schemas, state shape, lifecycle rules, quality
+formula, and handler options.
