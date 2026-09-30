@@ -10,6 +10,7 @@ import {
   marketTotals,
   openStall,
   placeBuyOrder,
+  routeStalls,
 } from '../../src/index.js';
 
 function fixture() {
@@ -131,4 +132,80 @@ test('fulfillment events contain resolved facts and replay never requotes', () =
   changedPricing.stallsById['farm-stall'].prices.carrot = 19;
   const replayed = handlers['market.buy_order_fulfill'].reduce(changedPricing, event);
   assert.equal(replayed.trades[0].unitPrice, 16);
+});
+
+test('self-trade, handler payload accessors, and hidden mutation are rejected', () => {
+  let state = fixture();
+  state = placeBuyOrder(state, {
+    actorId: 'buyer', orderId: 'o', buyerId: 'buyer', itemId: 'carrot',
+    category: 'produce', quantity: 2, limitUnitPrice: 20, createdSequence: 1, expiresSequence: 10,
+  });
+
+  let getterRuns = 0;
+  const payload = {};
+  Object.defineProperty(payload, 'orderId', {
+    enumerable: true,
+    get() { getterRuns += 1; return 'o'; },
+  });
+  const result = createMarketHandlers()['market.buy_order_fulfill'].decide(
+    state,
+    { actorId: 'farmer', payload },
+    { createEvent() { throw new Error('must not emit'); } },
+  );
+  assert.equal(result.accepted, false);
+  assert.equal(getterRuns, 0);
+});
+
+test('self-trade is rejected when buyer owns eligible stock', () => {
+  let state = createMarketState();
+  state = createActor(state, { actorId: 'buyer', balance: 100, items: { carrot: 2 } });
+  state = openStall(state, {
+    actorId: 'buyer', stallId: 'buyer-stall', ownerId: 'buyer',
+    roles: ['farmer'], categories: [], stock: { carrot: 2 }, prices: { carrot: 10 },
+  });
+  state = placeBuyOrder(state, {
+    actorId: 'buyer', orderId: 'o', buyerId: 'buyer', itemId: 'carrot',
+    category: 'produce', quantity: 1, limitUnitPrice: 20, createdSequence: 1, expiresSequence: 10,
+  });
+  assert.throws(() => fulfillBuyOrder(state, {
+    actorId: 'buyer', tradeId: 'self-trade', orderId: 'o',
+    stallId: 'buyer-stall', quantity: 1, currentSequence: 2,
+  }), error => error.code === 'market.self_trade');
+});
+
+test('caller mutation cannot alter accepted state and unroutable items return no route', () => {
+  const items = { carrot: 2 };
+  let state = createMarketState();
+  state = createActor(state, { actorId: 'seller', balance: 0, items });
+  items.carrot = 999;
+  assert.equal(state.actorsById.seller.items.carrot, 2);
+
+  state = createActor(state, { actorId: 'buyer', balance: 100, items: {} });
+  state = openStall(state, {
+    actorId: 'seller', stallId: 's', ownerId: 'seller', roles: [], categories: [],
+    stock: { carrot: 2 }, prices: { carrot: 10 },
+  });
+  state = placeBuyOrder(state, {
+    actorId: 'buyer', orderId: 'o', buyerId: 'buyer', itemId: 'carrot',
+    category: 'unknown', quantity: 1, limitUnitPrice: 20,
+    createdSequence: 1, expiresSequence: 10,
+  });
+  assert.deepEqual(routeStalls(state, 'o'), []);
+});
+
+test('persisted trade totals must agree with order remainder', () => {
+  let state = fixture();
+  state = placeBuyOrder(state, {
+    actorId: 'buyer', orderId: 'o', buyerId: 'buyer', itemId: 'carrot',
+    category: 'produce', quantity: 2, limitUnitPrice: 20,
+    createdSequence: 1, expiresSequence: 10,
+  });
+  state = fulfillBuyOrder(state, {
+    actorId: 'farmer', tradeId: 't', orderId: 'o', stallId: 'farm-stall',
+    quantity: 1, currentSequence: 2,
+  });
+  const corrupt = structuredClone(state);
+  corrupt.ordersById.o.remaining = 2;
+  corrupt.ordersById.o.escrow = 40;
+  assert.throws(() => createMarketState(corrupt), error => error.code === 'market.invalid_state');
 });

@@ -209,6 +209,7 @@ export function validateMarketState(input) {
   }
 
   const tradeIds = new Set();
+  const tradedByOrder = new Map();
   for (const value of input.trades) {
     plain(value, 'trade');
     for (const field of ['tradeId', 'orderId', 'stallId', 'buyerId', 'sellerId', 'itemId']) stableId(value[field], field);
@@ -222,6 +223,13 @@ export function validateMarketState(input) {
     safeInt(value.total, 'trade total', 1); safeInt(value.sequence, 'trade sequence');
     if (value.total !== safeMultiply(value.quantity, value.unitPrice, 'trade total')) {
       fail('market.invalid_state', 'trade total is inconsistent', { tradeId: value.tradeId });
+    }
+    tradedByOrder.set(value.orderId, safeAdd(tradedByOrder.get(value.orderId) ?? 0, value.quantity, 'traded quantity'));
+  }
+  for (const [orderId, value] of Object.entries(input.ordersById)) {
+    const traded = tradedByOrder.get(orderId) ?? 0;
+    if (traded > value.quantity || value.remaining !== value.quantity - traded) {
+      fail('market.invalid_state', 'order remainder does not match recorded trades', { orderId, traded });
     }
   }
   return input;
@@ -329,6 +337,7 @@ function planFulfillment(state, input) {
   if (target.status !== 'open') fail('market.order_closed', 'order is not open', { orderId: args.orderId });
   const selected = stall(valid, stableId(args.stallId, 'stallId'));
   requireOwner(args.actorId ?? selected.ownerId, selected.ownerId, 'stall');
+  if (selected.ownerId === target.buyerId) fail('market.self_trade', 'buyer cannot fulfill their own order');
   const sequence = safeInt(args.currentSequence ?? target.createdSequence, 'currentSequence');
   if (sequence >= target.expiresSequence) fail('market.order_expired', 'order has reached its expiration boundary', { orderId: args.orderId });
   if (!selected.categories.includes(target.category) && !roleSupports(selected, target.category)) {
@@ -336,7 +345,10 @@ function planFulfillment(state, input) {
   }
   const tradeId = stableId(args.tradeId, 'tradeId');
   if (valid.trades.some(trade => trade.tradeId === tradeId)) fail('market.duplicate_trade', 'trade already exists', { tradeId });
-  const unitPrice = priceFor(selected, target);
+  const baseUnitPrice = own(selected.prices, target.itemId) ? selected.prices[target.itemId] : target.limitUnitPrice;
+  const pricingBaseBps = selected.basePriceBps;
+  const pricingStockBps = selected.stockPressureBps;
+  const unitPrice = quoteUnitPrice({ baseUnitPrice, modifiersBps: [pricingBaseBps, pricingStockBps] });
   if (unitPrice > target.limitUnitPrice) fail('market.price_exceeds_limit', 'quoted price exceeds order limit', { unitPrice });
   const requested = safeInt(args.quantity, 'quantity', 1);
   const filledQuantity = Math.min(requested, target.remaining, getQuantity(selected.stock, target.itemId));
@@ -345,7 +357,8 @@ function planFulfillment(state, input) {
   const escrowReleased = safeMultiply(filledQuantity, target.limitUnitPrice, 'released escrow');
   return {
     tradeId, orderId: args.orderId, stallId: args.stallId, buyerId: target.buyerId,
-    sellerId: selected.ownerId, itemId: target.itemId, filledQuantity, unitPrice, total,
+    sellerId: selected.ownerId, itemId: target.itemId, filledQuantity,
+    baseUnitPrice, pricingBaseBps, pricingStockBps, unitPrice, total,
     escrowReleased, buyerRefund: escrowReleased - total, sequence,
   };
 }
@@ -356,15 +369,24 @@ function applyFulfillmentFact(state, factInput) {
   if (next.trades.some(trade => trade.tradeId === fact.tradeId)) fail('market.duplicate_trade', 'trade already exists', { tradeId: fact.tradeId });
   const target = order(next, fact.orderId); const selected = stall(next, fact.stallId);
   if (target.status !== 'open') fail('market.order_closed', 'order is not open', { orderId: fact.orderId });
-  if (fact.buyerId !== target.buyerId || fact.sellerId !== selected.ownerId || fact.itemId !== target.itemId) {
+  if (fact.buyerId !== target.buyerId || fact.sellerId !== selected.ownerId || fact.itemId !== target.itemId
+      || fact.buyerId === fact.sellerId) {
     fail('market.stale_event', 'fulfillment references no longer match state');
+  }
+  if (!selected.categories.includes(target.category) && !roleSupports(selected, target.category)) {
+    fail('market.stale_event', 'stall no longer serves the recorded order category');
   }
   safeInt(fact.sequence, 'sequence');
   if (fact.sequence >= target.expiresSequence) fail('market.order_expired', 'order has reached its expiration boundary');
-  safeInt(fact.filledQuantity, 'filledQuantity', 1); safeInt(fact.unitPrice, 'unitPrice', 1);
+  safeInt(fact.filledQuantity, 'filledQuantity', 1);
+  safeInt(fact.baseUnitPrice, 'baseUnitPrice', 1);
+  safeInt(fact.pricingBaseBps, 'pricingBaseBps', 1);
+  safeInt(fact.pricingStockBps, 'pricingStockBps', 1);
+  safeInt(fact.unitPrice, 'unitPrice', 1);
   safeInt(fact.total, 'total', 1); safeInt(fact.escrowReleased, 'escrowReleased', 1); safeInt(fact.buyerRefund, 'buyerRefund');
   if (fact.filledQuantity > target.remaining || fact.filledQuantity > getQuantity(selected.stock, target.itemId)
       || fact.unitPrice > target.limitUnitPrice
+      || fact.unitPrice !== quoteUnitPrice({ baseUnitPrice: fact.baseUnitPrice, modifiersBps: [fact.pricingBaseBps, fact.pricingStockBps] })
       || fact.total !== safeMultiply(fact.filledQuantity, fact.unitPrice, 'trade total')
       || fact.escrowReleased !== safeMultiply(fact.filledQuantity, target.limitUnitPrice, 'released escrow')
       || fact.buyerRefund !== fact.escrowReleased - fact.total) {
@@ -434,9 +456,15 @@ export function marketTotals(state) {
   return { currency, items: sortedRecord(items) };
 }
 
+function commandInput(command) {
+  const payload = cloneData(command.payload, 'command payload');
+  plain(payload, 'command payload');
+  payload.actorId = command.actorId;
+  return payload;
+}
 function decision(operation, state, command, context, eventType) {
   try {
-    const fact = operation(state.market ?? state, { ...command.payload, actorId: command.actorId });
+    const fact = operation(state.market ?? state, commandInput(command));
     return { accepted: true, events: [context.createEvent(eventType, fact)], rejection: null };
   } catch (error) {
     if (error instanceof MarketError) {
@@ -449,8 +477,8 @@ function basicHandler(operation, eventType) {
   return {
     decide(state, command, context) {
       try {
-        operation(state.market ?? state, { ...command.payload, actorId: command.actorId });
-        return { accepted: true, events: [context.createEvent(eventType, { ...command.payload, actorId: command.actorId })], rejection: null };
+        operation(state.market ?? state, commandInput(command));
+        return { accepted: true, events: [context.createEvent(eventType, commandInput(command))], rejection: null };
       } catch (error) {
         if (error instanceof MarketError) return { accepted: false, events: [], rejection: { code: error.code, message: error.message, details: error.details } };
         throw error;
