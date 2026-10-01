@@ -171,3 +171,23 @@ test('forged events and event-store commit failures publish no state', () => {
   assert.equal(rolledBack, true);
   assert.deepEqual(failed.getState(), { agentsById: {} });
 });
+
+test('need reducer rejects replaying an older advancement over newer agent state', () => {
+  const { engine, handlers } = fixture();
+  const definition = {
+    needId: 'need.hunger', minimum: 0, maximum: 100, initial: 100,
+    interval: 10, decayPerInterval: 5, weight: 1,
+    urgencyPoints: [{ value: 0, urgency: 100 }, { value: 100, urgency: 0 }],
+  };
+  assert.equal(engine.dispatch(command('agent.register', registration({
+    needs: [{ needId: 'need.hunger', value: 100, lastSequence: 0, appliedIntervals: 0 }],
+  }))).accepted, true);
+  const first = engine.dispatch(command('agent.need_advance', {
+    agentId: 'agent.worker', definition, targetSequence: 10,
+  }, 1));
+  const second = engine.dispatch(command('agent.need_advance', {
+    agentId: 'agent.worker', definition, targetSequence: 20,
+  }, 2));
+  assert.equal(second.accepted, true);
+  assert.throws(() => handlers['agent.need_advance'].reduce(engine.getState(), first.events[0]), TypeError);
+});

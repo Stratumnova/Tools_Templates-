@@ -120,10 +120,14 @@ export function advanceNeed(needState, definition, targetSequence) {
   }
   const lastSequence = state.lastSequence + consumedSequence;
   if (!Number.isSafeInteger(lastSequence)) throw new TypeError('need sequence exceeds safe integer range');
+  const decayedValue = state.value - totalDecay;
+  if (!Number.isSafeInteger(decayedValue)) {
+    throw new TypeError('need value exceeds safe integer range');
+  }
 
   return Object.freeze({
     needId: state.needId,
-    value: Math.max(validated.minimum, state.value - totalDecay),
+    value: Math.max(validated.minimum, decayedValue),
     lastSequence,
     appliedIntervals,
   });

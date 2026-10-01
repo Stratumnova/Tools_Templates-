@@ -105,6 +105,11 @@ function needHandler() {
     const agent = validateAgentState(map[agentId]);
     const index = agent.needs.findIndex((entry) => entry.needId === need.needId);
     if (index < 0) throw new TypeError('need does not exist during replay');
+    const currentNeed = agent.needs[index];
+    if (need.lastSequence < currentNeed.lastSequence
+        || need.appliedIntervals < currentNeed.appliedIntervals) {
+      throw new TypeError('need advancement fact is stale');
+    }
     const needs = [...agent.needs];
     needs[index] = need;
     return replaceAgent(state, { ...agent, needs });

@@ -109,6 +109,11 @@ export function applyAgentDecisionFact(state, fact) {
   if (!ACTIONS.includes(resolved.action)) throw new TypeError('fact action is invalid');
   validateRankings(resolved.rankedCandidates);
   if (resolved.winner !== null) validateRanking(resolved.winner, 'fact.winner');
+  if (resolved.winner !== null
+      && (resolved.rankedCandidates.length === 0
+        || !same(resolved.winner, resolved.rankedCandidates[0]))) {
+    throw new TypeError('fact winner must match the first recorded ranking');
+  }
   if (resolved.previousGoal !== null) validateGoal(resolved.previousGoal, 'fact.previousGoal');
   if (!same(resolved.previousGoal, agent.currentGoal)) throw new TypeError('fact previous goal is stale');
 

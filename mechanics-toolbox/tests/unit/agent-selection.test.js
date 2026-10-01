@@ -150,3 +150,15 @@ test('rejects hostile and malformed decision facts atomically', () => {
   assert.equal(reads, 0);
   assert.equal(state.decisionIds.length, 0);
 });
+
+test('rejects a recorded winner that does not match the recorded ranking', () => {
+  const state = agent();
+  const fact = decide(state, {
+    rankedCandidates: [ranked('candidate.stock', 20), ranked('candidate.clean', 10)],
+  });
+  assert.throws(() => applyAgentDecisionFact(state, {
+    ...fact,
+    winner: ranked('candidate.clean', 10),
+  }), TypeError);
+  assert.equal(state.currentGoal, null);
+});

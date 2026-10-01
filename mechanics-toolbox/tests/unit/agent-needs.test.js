@@ -85,6 +85,17 @@ test('rejects_backward_time_and_overflow', () => {
   );
   assert.throws(() => validateNeedDefinition(definition({ interval: Number.MAX_SAFE_INTEGER + 1 })), TypeError);
   assert.throws(() => validateNeedDefinition(definition({ minimum: 50, initial: 49 })), TypeError);
+  const extreme = definition({
+    minimum: -Number.MAX_SAFE_INTEGER,
+    maximum: Number.MAX_SAFE_INTEGER,
+    initial: -Number.MAX_SAFE_INTEGER,
+    decayPerInterval: Number.MAX_SAFE_INTEGER,
+    urgencyPoints: [
+      { value: -Number.MAX_SAFE_INTEGER, urgency: 1 },
+      { value: Number.MAX_SAFE_INTEGER, urgency: 0 },
+    ],
+  });
+  assert.throws(() => advanceNeed(createNeedState(extreme, 0), extreme, 10), TypeError);
 });
 
 test('rejects_hostile_need_data_without_getter_execution', () => {
