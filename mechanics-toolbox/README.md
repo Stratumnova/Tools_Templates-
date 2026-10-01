@@ -1,7 +1,7 @@
 # A25 Mechanics Toolbox
 
-Version 0.6.0 provides deterministic core, inventory, time, task, reservation, offline,
-crafting, and market mechanics for browser and Android WebView runtimes.
+Version 0.7.0 provides deterministic core, inventory, time, task, reservation, offline,
+crafting, market, and agent-routine mechanics for browser and Android WebView runtimes.
 
 Run `npm test` for the complete suite or `node examples/headless/npc-crafts-trap.mjs` for
 an engine-backed production example. See `docs/categories/crafting.md` for the crafting
@@ -127,3 +127,16 @@ const routes = routeStalls(market, 'order-1');
 ```
 
 See `docs/categories/markets.md` and run `node examples/headless/market-day.mjs`.
+
+## Agents and routines
+
+Batch 7 adds deterministic needs, skills, roles, bounded memory, recurring routines,
+integer utility scoring, goal interruption/resumption, engine handlers, and bounded offline
+decisions. Player and NPC actors use the same command vocabulary and permission boundary.
+
+Stall-worker data groups crafting and market command proposals for indexing and selection;
+it does not directly connect or mutate those independent systems. Selected gameplay commands
+still require a separate `engine.dispatch(command)` call.
+
+See `docs/categories/agents-and-routines.md` and run
+`node examples/headless/stall-worker-day.mjs`.

@@ -37,3 +37,4 @@ jobs:
           node examples/headless/offline-work.mjs
           node examples/headless/npc-crafts-trap.mjs
           node examples/headless/market-day.mjs
+          node examples/headless/stall-worker-day.mjs

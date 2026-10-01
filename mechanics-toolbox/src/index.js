@@ -47,3 +47,14 @@ export {
   routeStalls,
   validateMarketState,
 } from './market/market.js';
+
+export { advanceNeed, createNeedState, validateNeedDefinition } from './agents/needs.js';
+export { validateRoleSet, validateSkillProfile } from './agents/skills.js';
+export { createAgentMemory, rememberObservation } from './agents/memory.js';
+export { eligibleRoutineCandidates, validateRoutineDefinition } from './agents/routines.js';
+export { rankCandidates, scoreCandidate } from './agents/utility.js';
+export { createAgentState, validateAgentState } from './agents/agents.js';
+export { applyAgentDecisionFact, selectAgentDecision } from './agents/selection.js';
+export { createAgentHandlers } from './agents/handlers.js';
+export { advanceAgentsOffline } from './agents/offline.js';
+export { buildStallWorkerCandidates } from './agents/stall-worker.js';
