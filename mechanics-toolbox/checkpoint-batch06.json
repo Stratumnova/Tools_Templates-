@@ -7,6 +7,17 @@
   "archiveBytes": 334899,
   "archivedRoot": "mechanics-toolbox/",
   "fileCount": 59,
-  "reviewStatus": "accepted-pending-final-ci",
-  "generatedAt": "2026-09-30T13:15:00-06:00"
+  "reviewStatus": "accepted",
+  "finalReviewedHead": "0e3257df8564f3ec1a217c5a9c32c13831ad733e",
+  "finalMergeCommit": "fe77a7ec279aec61c84f979094f523ad46ada894",
+  "verification": {
+    "tests": {
+      "passed": 132,
+      "failed": 0
+    },
+    "headlessExamples": 5,
+    "ci": "passed"
+  },
+  "generatedAt": "2026-09-30T13:15:00-06:00",
+  "finalizedAt": "2026-09-30T20:34:07-06:00"
 }
