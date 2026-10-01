@@ -249,41 +249,35 @@ Run: `cd mechanics-toolbox && node --test tests/integration/agent-offline.test.j
 
 `git commit -m "Add bounded offline agent decisions"`
 
-### Task 8: Stall-worker candidate adapter and cross-system scenario
+### Task 8: Stall-worker routine adapter and indexed example
 
 **Files:**
 - Create: `mechanics-toolbox/src/agents/stall-worker.js`
 - Create: `mechanics-toolbox/data/routines/stall-worker.json`
 - Create: `mechanics-toolbox/tests/integration/stall-worker-chain.test.js`
 - Create: `mechanics-toolbox/examples/headless/stall-worker-day.mjs`
-- Conditional prior-batch target requiring approval: `mechanics-toolbox/src/market/market.js`
-- Conditional prior-batch tests requiring approval: `mechanics-toolbox/tests/unit/market.test.js` and `market-adversarial.test.js`
 
 **Interfaces:**
-- Consumes: existing task, inventory, crafting, and market public commands plus Tasks 1–7.
-- Produces: `buildStallWorkerCandidates(context)` and a complete headless example.
+- Consumes: existing command names as indexed templates plus Tasks 1–7; it does not dispatch or connect the subsystems.
+- Produces: `buildStallWorkerCandidates(context)` and a headless indexing/selection example.
 
-- [ ] **Step 1: Prove whether accepted Batch 6 exposes owned stall restocking**
+- [ ] **Step 1: Write failing stall-worker indexing tests**
 
-Inspect public market handlers and tests. Expected finding from the approved spec review: fulfillment exists, but post-creation owned restock does not.
+Test low-stock observation, deterministic candidate ordering, role gating, craft/fulfillment command-template grouping, caller isolation, hostile data, changed-input replay, and retry idempotency. Do not require direct state transfer between systems.
 
-- [ ] **Step 2: Stop at the prior-batch approval gate if restock is absent**
+- [ ] **Step 2: Implement only new Batch 7 adapter and data files**
 
-Ask Matthew before editing Batch 6. Name exact target: `src/market/market.js`. Proposed smallest compatibility extension: `market.stall_restock`, owned by the stall owner, moving exact recorded quantity from the owner's actor inventory into the owned stall with conservation, duplicate fact protection, safe arithmetic, and fact-only replay. State compatibility risk: new optional command/event only; existing state shape remains valid.
+`buildStallWorkerCandidates` creates indexed existing-command proposals; it never dispatches them or edits Batch 1–6 state maps.
 
-- [ ] **Step 3: Write failing stall-worker chain tests**
+- [ ] **Step 3: Build the headless indexing/selection example**
 
-Test low-stock observation, deterministic craft candidate selection, existing task and production lifecycle use, approved owned restock, Batch 6 fulfillment, exact currency/item conservation, capability denial, interrupted production, closed orders, changed-price replay, and retry idempotency.
+Demonstrate that a stall worker selects a recorded command proposal using Tasks 1–7 while inventory, crafting, task, and market systems remain independent.
 
-- [ ] **Step 4: Implement only the approved adapter and new Batch 7 files**
-
-`buildStallWorkerCandidates` creates existing-command proposals; it never edits Batch 1–6 state maps. Any approved restock extension is developed with its own Batch 6 regression tests first.
-
-- [ ] **Step 5: Run the chain, complete suite, and all examples**
+- [ ] **Step 4: Run the focused test, complete suite, and all examples**
 
 Run: `cd mechanics-toolbox && node --test tests/integration/stall-worker-chain.test.js && npm test && for file in examples/headless/*.mjs; do node "$file"; done`
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 `git commit -m "Add deterministic stall worker integration"`
 

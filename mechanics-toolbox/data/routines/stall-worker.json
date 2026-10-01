@@ -1,0 +1,18 @@
+{
+  "category": "agents-and-routines",
+  "roleId": "role.stall_worker",
+  "adapter": "buildStallWorkerCandidates",
+  "commandGroups": [
+    {
+      "groupId": "stall-worker.production",
+      "commandType": "production.queue",
+      "source": "lowStock"
+    },
+    {
+      "groupId": "stall-worker.fulfillment",
+      "commandType": "market.buy_order_fulfill",
+      "source": "openOrders"
+    }
+  ],
+  "connectionPolicy": "indexed-proposals-only"
+}
