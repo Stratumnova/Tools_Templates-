@@ -19,6 +19,12 @@ Batch 7 is subordinate to the existing engine:
 No Batch 7 module may directly change inventory stacks, reservations, tasks, production jobs,
 stall stock, orders, balances, clocks, or event history.
 
+Before modifying any file, public interface, command, event, reducer, test expectation,
+documentation contract, fixture, or behavior originating in Batches 1–6, implementation
+must stop and obtain Matthew's explicit approval. The approval request must name the exact
+prior-batch target, explain why Batch 7 needs the change, state compatibility risk, and
+propose the smallest viable modification.
+
 ## Module boundaries
 
 ### `src/agents/needs.js`
