@@ -1,0 +1,21 @@
+{
+  "batch": 7,
+  "toolboxVersion": "0.7.0",
+  "sourceCommit": "d26995d429bf7a652f5ace11729016cbb5282e21",
+  "sourceTree": "8059c60275ee22a70606314c6433cf60e549fc59",
+  "archiveBlob": "e8cb1f5a9c8cc216be19e1cf5668bd9d909dcc43",
+  "archiveSha256": "5782c854e26085155140554657f601377013b4d17c088d5732a9f452d241caf0",
+  "archiveSize": 124653,
+  "fileCount": 82,
+  "testCount": 175,
+  "exampleCount": 6,
+  "reviewStatus": "accepted",
+  "connectionPolicy": "indexed-proposals-only",
+  "priorBatchesModifiedWithApproval": [
+    "mechanics-toolbox/src/index.js",
+    "mechanics-toolbox/manifest.json",
+    "mechanics-toolbox/package.json",
+    "mechanics-toolbox/README.md",
+    ".github/workflows/mechanics-toolbox.yml"
+  ]
+}
